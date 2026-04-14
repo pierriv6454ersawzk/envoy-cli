@@ -36,6 +36,15 @@ def test_get_remote_config_returns_empty_when_missing(base_dir):
     assert result == {}
 
 
+def test_set_remote_config_overwrites_existing(base_dir):
+    """Ensure set_remote_config replaces previous config rather than merging."""
+    set_remote_config({"backend": "s3", "bucket": "old-bucket"}, base_dir)
+    set_remote_config({"backend": "gcs"}, base_dir)
+    loaded = get_remote_config(base_dir)
+    assert loaded == {"backend": "gcs"}
+    assert "bucket" not in loaded
+
+
 def test_push_profile_creates_remote_file(base_dir, tmp_path):
     local = profile_path("prod", base_dir)
     save(str(local), PASSPHRASE, {"KEY": "value"})
@@ -89,3 +98,17 @@ def test_diff_profiles_no_diff(base_dir, tmp_path):
 
     diff = diff_profiles("dev", PASSPHRASE, remote, base_dir)
     assert diff == {}
+
+
+def test_diff_profiles_local_only_key(base_dir, tmp_path):
+    """Keys present only in local should appear in diff with remote value None."""
+    local = profile_path("dev", base_dir)
+    save(str(local), PASSPHRASE, {"LOCAL_ONLY": "here", "SHARED": "val"})
+
+    remote = str(tmp_path / "remote.enc")
+    save(remote, PASSPHRASE, {"SHARED": "val"})
+
+    diff = diff_profiles("dev", PASSPHRASE, remote, base_dir)
+    assert "LOCAL_ONLY" in diff
+    assert diff["LOCAL_ONLY"] == {"local": "here", "remote": None}
+    assert "SHARED" not in diff
