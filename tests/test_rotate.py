@@ -50,6 +50,16 @@ def test_rotate_key_wrong_old_passphrase_raises(base_dir):
         rotate_key("default", "wrong", "new-secret", base_dir=base_dir)
 
 
+def test_rotate_key_wrong_old_passphrase_leaves_vault_intact(base_dir):
+    """A failed rotation must not corrupt or alter the existing vault."""
+    path = _seed_profile(base_dir)
+    with pytest.raises(ValueError):
+        rotate_key("default", "wrong", "new-secret", base_dir=base_dir)
+    # Original passphrase should still unlock the vault unchanged.
+    data = load(path, "old-secret")
+    assert data == {"FOO": "bar", "BAZ": "qux"}
+
+
 def test_rotate_key_missing_profile_raises(base_dir):
     with pytest.raises(FileNotFoundError, match="Profile 'ghost' not found"):
         rotate_key("ghost", "old", "new", base_dir=base_dir)
