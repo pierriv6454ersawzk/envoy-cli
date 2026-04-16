@@ -36,6 +36,12 @@ def test_cmd_alias_add_empty_alias_exits(base_dir):
         cmd_alias_add(make_args(base_dir, alias="", profile="production"))
 
 
+def test_cmd_alias_add_duplicate_exits(base_dir):
+    add_alias("prod", "production", base_dir=base_dir)
+    with pytest.raises(SystemExit):
+        cmd_alias_add(make_args(base_dir, alias="prod", profile="other"))
+
+
 def test_cmd_alias_remove_prints_confirmation(base_dir, capsys):
     add_alias("dev", "development", base_dir=base_dir)
     cmd_alias_remove(make_args(base_dir, alias="dev"))
