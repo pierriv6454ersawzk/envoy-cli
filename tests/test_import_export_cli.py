@@ -66,6 +66,17 @@ def test_cmd_export_wrong_passphrase_exits(base_dir):
     assert exc_info.value.code == 1
 
 
+def test_cmd_export_masked_hides_values(base_dir, capsys):
+    """When mask=True, values should be redacted in stdout output."""
+    _seed(base_dir)
+    args = make_args(base_dir=base_dir, mask=True)
+    cmd_export(args)
+    captured = capsys.readouterr()
+    assert "APP_ENV" in captured.out
+    assert "production" not in captured.out
+    assert "postgres://localhost/db" not in captured.out
+
+
 def test_cmd_import_creates_profile(base_dir, tmp_path):
     env_file = tmp_path / "import.env"
     env_file.write_text("FOO=bar\nBAZ=qux\n")
@@ -77,8 +88,7 @@ def test_cmd_import_creates_profile(base_dir, tmp_path):
     vault_dir = get_vault_dir(base_dir)
     path = profile_path(vault_dir, "default")
     data = load(path, "secret")
-    assert data["FOO"] == "bar"
-    assert data["BAZ"] == "qux"
+    assert data["FOn    assert data["BAZ"] == "qux"
 
 
 def test_cmd_import_missing_file_exits(base_dir):
