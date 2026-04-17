@@ -26,6 +26,11 @@ def test_set_quota_invalid_raises(base_dir):
         set_quota("dev", 0, base_dir=base_dir)
 
 
+def test_set_quota_negative_raises(base_dir):
+    with pytest.raises(ValueError):
+        set_quota("dev", -5, base_dir=base_dir)
+
+
 def test_remove_quota_reverts_to_default(base_dir):
     set_quota("dev", 5, base_dir=base_dir)
     remove_quota("dev", base_dir=base_dir)
@@ -45,6 +50,14 @@ def test_list_quotas_shows_set_entries(base_dir):
     set_quota("prod", 50, base_dir=base_dir)
     result = list_quotas(base_dir=base_dir)
     assert result == {"dev": 20, "prod": 50}
+
+
+def test_list_quotas_excludes_removed_entries(base_dir):
+    set_quota("dev", 20, base_dir=base_dir)
+    set_quota("prod", 50, base_dir=base_dir)
+    remove_quota("dev", base_dir=base_dir)
+    result = list_quotas(base_dir=base_dir)
+    assert result == {"prod": 50}
 
 
 def test_check_quota_passes_under_limit(base_dir):
