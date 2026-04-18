@@ -53,6 +53,10 @@ def import_env(source_path: Path, profile_path: Path, passphrase: str, overwrite
 
     Returns:
         The merged env vars dict that was saved to the vault.
+
+    Raises:
+        FileNotFoundError: If the source .env file does not exist.
+        ValueError: If the source file contains no valid key=value entries.
     """
     source_path = Path(source_path)
     if not source_path.exists():
@@ -75,6 +79,9 @@ def import_env(source_path: Path, profile_path: Path, passphrase: str, overwrite
             value = value[1:-1]
         if key:
             imported[key] = value
+
+    if not imported:
+        raise ValueError(f"No valid key=value entries found in: {source_path}")
 
     # Merge with existing vault if it exists
     existing: Dict[str, str] = {}
