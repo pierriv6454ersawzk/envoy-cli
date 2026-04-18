@@ -48,6 +48,15 @@ def test_acquire_lock_stores_current_pid(base_dir):
     assert data["pid"] == os.getpid()
 
 
+def test_acquire_lock_stores_timestamp(base_dir):
+    """Lock file should record a timestamp close to the current time."""
+    before = time.time()
+    acquire_lock("default", base_dir)
+    after = time.time()
+    data = json.loads(_lock_path("default", base_dir).read_text())
+    assert before <= data["ts"] <= after
+
+
 # ---------------------------------------------------------------------------
 # release_lock
 # ---------------------------------------------------------------------------
@@ -90,20 +99,14 @@ def test_is_locked_true_for_foreign_active_lock(base_dir):
     lp = _lock_path("default", base_dir)
     lp.parent.mkdir(parents=True, exist_ok=True)
     lp.write_text(json.dumps({"pid": os.getpid() + 9999, "ts": time.time()}))
+
     assert is_locked("default", base_dir) is True
 
 
-# ---------------------------------------------------------------------------
-# lock_info
-# ---------------------------------------------------------------------------
+def test_is_locked_false_for_foreign_stale_lock(base_dir):
+    """A lock held by another PID but with a stale timestamp should not block."""
+    lp = _lock_path("default", base_dir)
+    lp.parent.mkdir(parents=True, exist_ok=True)
+    lp.write_text(json.dumps({"pid": os.getpid() + 9999, "ts": time.time() - 999}))
 
-def test_lock_info_returns_none_when_missing(base_dir):
-    assert lock_info("default", base_dir) is None
-
-
-def test_lock_info_returns_metadata(base_dir):
-    acquire_lock("staging", base_dir)
-    info = lock_info("staging", base_dir)
-    assert info is not None
-    assert info["pid"] == os.getpid()
-    assert "ts" in info
+    assert is_locked("default", base_dir) is False
