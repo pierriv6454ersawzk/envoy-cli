@@ -48,13 +48,27 @@ def test_remove_priority(base_dir):
     assert get_priority(base_dir, "default") == 0
 
 
+def test_remove_priority_missing_profile_raises(base_dir):
+    with pytest.raises(PriorityError, match="does not exist"):
+        remove_priority(base_dir, "ghost")
+
+
 def test_list_priorities_sorted_descending(base_dir):
-    for name, val in [("a", 1), ("b", 5), ("c", 3)]:
+    for name, val in [("a", 1), ("c", 3)]:
         _seed(base_dir, name)
         set_priority(base_dir, name, val)
     result = list_priorities(base_dir)
     priorities = [p for _, p in result]
     assert priorities == sorted(priorities, reverse=True)
+
+
+def test_list_priorities_includes_all_profiles(base_dir):
+    for name in ("x", "y", "z"):
+        _seed(base_dir, name)
+        set_priority(base_dir, name, 1)
+    result = list_priorities(base_dir)
+    names = [n for n, _ in result]
+    assert set(names) == {"x", "y", "z"}
 
 
 def test_list_priorities_empty(base_dir):
