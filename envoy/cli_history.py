@@ -6,6 +6,15 @@ from datetime import datetime
 from envoy.history import get_key_history, clear_key_history, all_keys_with_history
 
 
+def _format_entry(e: dict) -> str:
+    """Format a single history entry for display."""
+    ts = datetime.fromtimestamp(e["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
+    action = e["action"].upper()
+    old = e["old"] if e["old"] is not None else "(none)"
+    new = e["new"] if e["new"] is not None else "(none)"
+    return f"  [{ts}] {action}: {old!r} -> {new!r}"
+
+
 def cmd_history_show(args: argparse.Namespace) -> None:
     base_dir = getattr(args, "base_dir", None)
     entries = get_key_history(args.profile, args.key, base_dir=base_dir)
@@ -14,11 +23,7 @@ def cmd_history_show(args: argparse.Namespace) -> None:
         return
     print(f"History for '{args.key}' in profile '{args.profile}':")
     for e in entries:
-        ts = datetime.fromtimestamp(e["timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
-        action = e["action"].upper()
-        old = e["old"] if e["old"] is not None else "(none)"
-        new = e["new"] if e["new"] is not None else "(none)"
-        print(f"  [{ts}] {action}: {old!r} -> {new!r}")
+        print(_format_entry(e))
 
 
 def cmd_history_keys(args: argparse.Namespace) -> None:
