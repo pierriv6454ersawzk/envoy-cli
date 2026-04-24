@@ -40,6 +40,7 @@ def cmd_favorite_check(args) -> None:
         print(f"'{args.profile}' is a favorite.")
     else:
         print(f"'{args.profile}' is NOT a favorite.")
+        sys.exit(1)
 
 
 def register_favorite_commands(subparsers) -> None:
